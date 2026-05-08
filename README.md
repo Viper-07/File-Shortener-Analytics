@@ -95,10 +95,12 @@ SECRET_KEY=your-super-secret-key
 ## 📸 Screenshots
 
 ### Home Page
-![Home Page]([./docs/screenshots/home.png](https://github.com/Viper-07/File-Shortener-Analytics/blob/240273f132d95fc07be823f48f190159127ddae8/Screenshot%202026-05-08%20233447.png))
+![Home Page]
+![image alt]([./docs/screenshots/home.png](https://github.com/Viper-07/File-Shortener-Analytics/blob/240273f132d95fc07be823f48f190159127ddae8/Screenshot%202026-05-08%20233447.png))
 
 ### Create Account
-![Create Account]([./docs/screenshots/register.png](https://github.com/Viper-07/File-Shortener-Analytics/blob/894fc83a47bf84b2dfb05c944c1d6c092a0cdbba/Screenshot%202026-05-08%20233526.png))
+![Create Account]
+![image alt]([./docs/screenshots/register.png](https://github.com/Viper-07/File-Shortener-Analytics/blob/894fc83a47bf84b2dfb05c944c1d6c092a0cdbba/Screenshot%202026-05-08%20233526.png))
 
 ## 📄 License
 
