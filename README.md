@@ -94,7 +94,11 @@ SECRET_KEY=your-super-secret-key
 
 ## 📸 Screenshots
 
-*(Add your screenshots here)*
+### Home Page
+![Home Page](./docs/screenshots/home.png)
+
+### Create Account
+![Create Account](./docs/screenshots/register.png)
 
 ## 📄 License
 
