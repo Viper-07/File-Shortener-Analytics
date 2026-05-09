@@ -85,17 +85,23 @@ function Home() {
 
       <section className="features-grid">
         <div className="feature-card glass-card">
-          <Zap className="feature-icon" color="#8b5cf6" />
+          <div className="feature-icon-wrapper" style={{ '--icon-color': '#8b5cf6' }}>
+            <Zap className="feature-icon" color="#8b5cf6" size={32} />
+          </div>
           <h3>Lightning Fast</h3>
           <p>Links redirect in milliseconds with Redis-backed caching logic.</p>
         </div>
         <div className="feature-card glass-card">
-          <BarChart className="feature-icon" color="#ec4899" />
+          <div className="feature-icon-wrapper" style={{ '--icon-color': '#ec4899' }}>
+            <BarChart className="feature-icon" color="#ec4899" size={32} />
+          </div>
           <h3>Deep Analytics</h3>
           <p>Get detailed insights on browsers, countries, and devices.</p>
         </div>
         <div className="feature-card glass-card">
-          <Shield className="feature-icon" color="#10b981" />
+          <div className="feature-icon-wrapper" style={{ '--icon-color': '#10b981' }}>
+            <Shield className="feature-icon" color="#10b981" size={32} />
+          </div>
           <h3>Secure & Reliable</h3>
           <p>Privacy-first tracking and high-availability database architecture.</p>
         </div>

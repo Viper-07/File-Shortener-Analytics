@@ -13,6 +13,8 @@ class UserUpdate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
+    provider: str
+    provider_id: Optional[str] = None
 
     class Config:
         from_attributes = True

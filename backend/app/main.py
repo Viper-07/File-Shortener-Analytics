@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sqlalchemy.orm import Session
 from app.api.routes import links, analytics, auth
 from app.database.connection import engine, Base, get_db
@@ -25,6 +26,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+if settings.ENABLE_HTTPS:
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Include routers
 app.include_router(links.router, prefix=f"{settings.API_V1_STR}/links", tags=["links"])

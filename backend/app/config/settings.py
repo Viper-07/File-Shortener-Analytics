@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-super-secret-key-change-this-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
+    ENABLE_HTTPS: bool = False
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    
+    # Apple OAuth
+    APPLE_CLIENT_ID: str = ""
+    APPLE_CLIENT_SECRET: str = ""
 
     # Base URL for shortened links
     BASE_URL: str = "http://localhost:8000"

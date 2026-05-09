@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, UserPlus, ArrowRight } from 'lucide-react'
+import { Mail, Lock, UserPlus, ArrowRight, Globe, Smartphone } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import '../styles/Auth.css'
 
@@ -93,6 +93,19 @@ function Register() {
             <ArrowRight size={18} />
           </button>
         </form>
+
+        <div className="auth-divider">Or continue with</div>
+
+        <div className="social-buttons">
+          <a href={`${import.meta.env.VITE_API_URL || ''}/api/v1/auth/google/login`} className="btn-social">
+            <Globe size={18} />
+            Google
+          </a>
+          <a href={`${import.meta.env.VITE_API_URL || ''}/api/v1/auth/apple/login`} className="btn-social">
+            <Smartphone size={18} />
+            Apple
+          </a>
+        </div>
 
         <div className="auth-footer">
           <p>Already have an account? <Link to="/login">Sign in</Link></p>

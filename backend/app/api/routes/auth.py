@@ -5,6 +5,9 @@ from app.database.connection import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, Token
 from app.utils.auth import get_password_hash, verify_password, create_access_token
+from fastapi_sso.sso.google import GoogleSSO
+from fastapi_sso.sso.apple import AppleSSO
+from app.config.settings import settings
 
 router = APIRouter()
 
@@ -31,12 +34,83 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or user.provider != "local" or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# OAuth Handlers
+google_sso = GoogleSSO(
+    client_id=settings.GOOGLE_CLIENT_ID,
+    client_secret=settings.GOOGLE_CLIENT_SECRET,
+    redirect_uri=f"{settings.BASE_URL}{settings.API_V1_STR}/auth/google/callback"
+)
+
+apple_sso = AppleSSO(
+    client_id=settings.APPLE_CLIENT_ID,
+    client_secret=settings.APPLE_CLIENT_SECRET,
+    redirect_uri=f"{settings.BASE_URL}{settings.API_V1_STR}/auth/apple/callback"
+)
+
+@router.get("/google/login")
+async def google_login():
+    with google_sso:
+        return await google_sso.get_login_redirect()
+
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    with google_sso:
+        user_info = await google_sso.verify_and_process(request)
+    
+    if not user_info:
+        raise HTTPException(status_code=400, detail="Google authentication failed")
+    
+    # Check if user exists
+    user = db.query(User).filter(User.email == user_info.email).first()
+    if not user:
+        # Create new user
+        user = User(
+            email=user_info.email,
+            provider="google",
+            provider_id=user_info.id,
+            is_active=True
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/apple/login")
+async def apple_login():
+    with apple_sso:
+        return await apple_sso.get_login_redirect()
+
+@router.get("/apple/callback")
+async def apple_callback(request: Request, db: Session = Depends(get_db)):
+    with apple_sso:
+        user_info = await apple_sso.verify_and_process(request)
+    
+    if not user_info:
+        raise HTTPException(status_code=400, detail="Apple authentication failed")
+    
+    user = db.query(User).filter(User.email == user_info.email).first()
+    if not user:
+        user = User(
+            email=user_info.email,
+            provider="apple",
+            provider_id=user_info.id,
+            is_active=True
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
     
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
