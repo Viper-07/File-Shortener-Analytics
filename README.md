@@ -91,6 +91,7 @@ SECRET_KEY=your-super-secret-key
 ```
 
 ---
+<<<<<<< HEAD
 
 ## 📸 Screenshots
 
@@ -100,6 +101,8 @@ SECRET_KEY=your-super-secret-key
 ### Create Account
 ![Create Account](./docs/screenshots/register.png)
 
+=======
+>>>>>>> 9e1f2893feeb9a7afdfc5729e0382bea06485bf1
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
