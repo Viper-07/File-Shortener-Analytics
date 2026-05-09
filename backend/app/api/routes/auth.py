@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.models.user import User
@@ -10,16 +13,18 @@ from fastapi_sso.sso.apple import AppleSSO
 from app.config.settings import settings
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/register", response_model=Token)
-def register(user_in: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/hour")  # Limit registration attempts
+def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user_in.email).first()
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     new_user = User(
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password)
@@ -27,12 +32,13 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
+
     access_token = create_access_token(data={"sub": new_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=Token)
-def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("10/minute")  # Limit login attempts
+def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or user.provider != "local" or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -40,7 +46,7 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -66,10 +72,10 @@ async def google_login():
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     with google_sso:
         user_info = await google_sso.verify_and_process(request)
-    
+
     if not user_info:
         raise HTTPException(status_code=400, detail="Google authentication failed")
-    
+
     # Check if user exists
     user = db.query(User).filter(User.email == user_info.email).first()
     if not user:
@@ -83,7 +89,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
-    
+
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -96,10 +102,10 @@ async def apple_login():
 async def apple_callback(request: Request, db: Session = Depends(get_db)):
     with apple_sso:
         user_info = await apple_sso.verify_and_process(request)
-    
+
     if not user_info:
         raise HTTPException(status_code=400, detail="Apple authentication failed")
-    
+
     user = db.query(User).filter(User.email == user_info.email).first()
     if not user:
         user = User(
@@ -111,6 +117,6 @@ async def apple_callback(request: Request, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
-    
+
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}

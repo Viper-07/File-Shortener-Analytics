@@ -2,6 +2,12 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import time
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 from sqlalchemy.orm import Session
 from app.api.routes import links, analytics, auth
 from app.database.connection import engine, Base, get_db
@@ -14,21 +20,42 @@ from datetime import datetime, timezone
 # Create database tables (in a real app, use Alembic)
 Base.metadata.create_all(bind=engine)
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
 )
 
-# Set up CORS
+# Add rate limiting middleware
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Set up CORS with configured origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 if settings.ENABLE_HTTPS:
     app.add_middleware(HTTPSRedirectMiddleware)
+
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include routers
 app.include_router(links.router, prefix=f"{settings.API_V1_STR}/links", tags=["links"])
@@ -36,6 +63,7 @@ app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 
 @app.get("/{short_code}")
+@limiter.limit("10/minute")  # Rate limit for redirect endpoint
 async def redirect_to_url(short_code: str, request: Request, db: Session = Depends(get_db)):
     """
     Main redirection endpoint.
@@ -44,15 +72,15 @@ async def redirect_to_url(short_code: str, request: Request, db: Session = Depen
     link = link_service.get_link_by_short_code(db, short_code)
     if not link:
         raise HTTPException(status_code=404, detail="Link not found")
-    
+
     # 1. Check Expiration
     if link.expires_at and link.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
         raise HTTPException(status_code=410, detail="This link has expired")
-    
+
     # 2. Check One-time use
     if link.is_one_time and link.is_used:
         raise HTTPException(status_code=410, detail="This one-time link has already been used")
-    
+
     # 3. Check Password Protection
     if link.password_hash:
         # Redirect to frontend password entry page
@@ -62,11 +90,11 @@ async def redirect_to_url(short_code: str, request: Request, db: Session = Depen
 
     # Log click event
     await link_service.log_click(db, link.id, request)
-    
+
     # Mark as used if one-time
     if link.is_one_time:
         link_service.mark_as_used(db, link)
-    
+
     return RedirectResponse(url=link.original_url)
 
 @app.get("/")
