@@ -10,6 +10,10 @@ class Link(Base):
     original_url = Column(String, nullable=False)
     short_code = Column(String, unique=True, index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    password_hash = Column(String, nullable=True)
+    is_one_time = Column(Integer, default=0) # 0 = False, 1 = True (using Integer for better compatibility)
+    is_used = Column(Integer, default=0)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
 
     owner = relationship("User", back_populates="links")

@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import LinkStats from './pages/LinkStats'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import PasswordEntry from './pages/PasswordEntry'
 import NotFound from './pages/NotFound'
 import './styles/App.css'
 
@@ -73,6 +74,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/p/:shortCode" element={<PasswordEntry />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -6,7 +6,9 @@ class LinkBase(BaseModel):
     original_url: HttpUrl
 
 class LinkCreate(LinkBase):
-    pass
+    expires_at: Optional[datetime] = None
+    password: Optional[str] = None
+    is_one_time: bool = False
 
 class LinkUpdate(LinkBase):
     pass
@@ -24,3 +26,6 @@ class LinkResponse(BaseModel):
     short_url: str
     short_code: str
     created_at: datetime
+    expires_at: Optional[datetime] = None
+    is_one_time: bool = False
+    is_protected: bool = False

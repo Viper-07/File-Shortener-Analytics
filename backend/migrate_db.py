@@ -18,6 +18,19 @@ def migrate():
                 print("Migration successful!")
             else:
                 print("Schema is already up to date.")
+
+            # Check if premium columns exist in 'links' table
+            result = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='links' AND column_name='expires_at'"))
+            if not result.fetchone():
+                print("Adding Premium columns to 'links' table...")
+                conn.execute(text("ALTER TABLE links ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE"))
+                conn.execute(text("ALTER TABLE links ADD COLUMN password_hash VARCHAR"))
+                conn.execute(text("ALTER TABLE links ADD COLUMN is_one_time INTEGER DEFAULT 0"))
+                conn.execute(text("ALTER TABLE links ADD COLUMN is_used INTEGER DEFAULT 0"))
+                conn.commit()
+                print("Link migration successful!")
+            else:
+                print("Link schema is already up to date.")
     except Exception as e:
         print(f"Migration failed: {e}")
 

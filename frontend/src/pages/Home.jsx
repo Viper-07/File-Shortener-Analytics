@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link2, Copy, Check, ArrowRight, Zap, Shield, BarChart } from 'lucide-react'
+import { Link2, Copy, Check, ArrowRight, Zap, Shield, BarChart, Settings2, Clock, Lock, UserCheck } from 'lucide-react'
 import { linkService } from '../services/api'
 import '../styles/Home.css'
 
@@ -9,6 +9,10 @@ function Home() {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+  const [showPremium, setShowPremium] = useState(false)
+  const [expiresAt, setExpiresAt] = useState('')
+  const [password, setPassword] = useState('')
+  const [isOneTime, setIsOneTime] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,9 +21,19 @@ function Home() {
     setLoading(true)
     setError('')
     try {
-      const data = await linkService.shorten(url)
+      const data = await linkService.shorten({
+        original_url: url,
+        expires_at: expiresAt || null,
+        password: password || null,
+        is_one_time: isOneTime
+      })
       setResult(data)
       setUrl('')
+      // Reset premium options
+      setExpiresAt('')
+      setPassword('')
+      setIsOneTime(false)
+      setShowPremium(false)
     } catch (err) {
       setError('Failed to shorten URL. Please check the link and try again.')
     } finally {
@@ -62,6 +76,50 @@ function Home() {
             <ArrowRight size={18} />
           </button>
         </form>
+
+        <div className="premium-toggle">
+          <button 
+            type="button" 
+            className={`btn-toggle ${showPremium ? 'active' : ''}`}
+            onClick={() => setShowPremium(!showPremium)}
+          >
+            <Settings2 size={16} />
+            Premium Options
+          </button>
+        </div>
+
+        {showPremium && (
+          <div className="premium-options fade-in">
+            <div className="option-group">
+              <label><Clock size={16} /> Expiration Date</label>
+              <input 
+                type="datetime-local" 
+                value={expiresAt}
+                onChange={(e) => setExpiresAt(e.target.value)}
+              />
+            </div>
+            <div className="option-group">
+              <label><Lock size={16} /> Password Protection</label>
+              <input 
+                type="password" 
+                placeholder="Set a password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="option-group checkbox">
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={isOneTime}
+                  onChange={(e) => setIsOneTime(e.target.checked)}
+                />
+                <UserCheck size={16} />
+                One-time Use (Burn after click)
+              </label>
+            </div>
+          </div>
+        )}
 
         {error && <p className="error-message">{error}</p>}
 

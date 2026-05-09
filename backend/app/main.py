@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sqlalchemy.orm import Session
@@ -9,6 +9,7 @@ from app.models.link import Link
 from app.models.click_event import ClickEvent
 from app.services import link_service
 from app.config.settings import settings
+from datetime import datetime, timezone
 
 # Create database tables (in a real app, use Alembic)
 Base.metadata.create_all(bind=engine)
@@ -44,8 +45,27 @@ async def redirect_to_url(short_code: str, request: Request, db: Session = Depen
     if not link:
         raise HTTPException(status_code=404, detail="Link not found")
     
-    # Log click event asynchronously (ideally via a background task)
+    # 1. Check Expiration
+    if link.expires_at and link.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="This link has expired")
+    
+    # 2. Check One-time use
+    if link.is_one_time and link.is_used:
+        raise HTTPException(status_code=410, detail="This one-time link has already been used")
+    
+    # 3. Check Password Protection
+    if link.password_hash:
+        # Redirect to frontend password entry page
+        # Assuming frontend is at http://localhost:3000
+        frontend_url = "http://localhost:3000" # In prod, get from settings
+        return RedirectResponse(url=f"{frontend_url}/p/{short_code}")
+
+    # Log click event
     await link_service.log_click(db, link.id, request)
+    
+    # Mark as used if one-time
+    if link.is_one_time:
+        link_service.mark_as_used(db, link)
     
     return RedirectResponse(url=link.original_url)
 

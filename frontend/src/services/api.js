@@ -8,8 +8,10 @@ const api = axios.create({
 });
 
 export const linkService = {
-  shorten: async (url) => {
-    const response = await api.post('/links/', { original_url: url });
+  shorten: async (data) => {
+    // If data is just a string, convert to object
+    const payload = typeof data === 'string' ? { original_url: data } : data;
+    const response = await api.post('/links/', payload);
     return response.data;
   },
   getStats: async (shortCode) => {
@@ -18,6 +20,10 @@ export const linkService = {
   },
   getLinkInfo: async (shortCode) => {
     const response = await api.get(`/links/${shortCode}`);
+    return response.data;
+  },
+  verifyPassword: async (shortCode, password) => {
+    const response = await api.post(`/links/${shortCode}/verify`, { password });
     return response.data;
   }
 };

@@ -76,33 +76,57 @@
   color: var(--text-dim);
 }
 
+.meta-item.protected { color: #f59e0b; }
+.meta-item.one-time { color: #10b981; }
+.meta-item.expiry { color: #ef4444; }
+
 .link-card-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
 }
 
-.btn-stats {
+.btn-stats, .btn-qr {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.75rem;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
   background: transparent;
   color: var(--text-main);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   transition: var(--transition-fast);
 }
 
-.btn-stats:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
+.btn-stats:hover, .btn-qr:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-dim);
+}
+
+.share-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.share-actions button {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.share-actions button:hover {
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.1);
 }
 
 .empty-state {
@@ -119,4 +143,56 @@
   text-align: center;
   padding: 4rem;
   color: var(--text-dim);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.btn-close {
+  background: transparent;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.qr-display {
+  background: white;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.qr-display img {
+  width: 250px;
+  height: 250px;
+}
+
+.modal-footer .btn-primary {
+  width: 100%;
+  justify-content: center;
+  padding: 1rem;
 }
